@@ -1,0 +1,59 @@
+apiVersion: launchpad/v1
+kind: HarnessConfig
+
+# Contract: sdd-delivery/v2 until prayog-skills contract v3 is tagged (OQ-01),
+# then bump to sdd-delivery/v3 and re-run apply-harness on every repo.
+delivery_contract: sdd-delivery/v2
+delivery_roles:
+  engineering-gate: mandate-pe
+
+org: drivestream-lab
+
+profiles:
+  meta-pm:
+    skills:
+      - repo: prayog-skills
+        ref: v0.5.6
+    skill_runtimes:
+      - .agents/skills
+      - .claude/skills
+    owners:
+      team: mandate-pm
+      layout: meta
+
+  python-backend:
+    constitution:
+      repo: python-services-rules
+      ref: v0.5.12          # bump after the workflows/ upstream PR is tagged (PL-2)
+    skills:
+      - repo: prayog-skills
+        ref: v0.5.6
+    skill_runtimes:
+      - .agents/skills
+      - .claude/skills
+    owners:
+      team: mandate-backend
+      layout: app_src
+
+  # Enrol only after paperclip-plugin-rules v0.1.0 is tagged and
+  # prayog-skills ships profiles/paperclip-plugin.yaml (PL-4).
+  paperclip-plugin:
+    constitution:
+      repo: paperclip-plugin-rules
+      ref: v0.1.0
+    skills:
+      - repo: prayog-skills
+        ref: v0.5.6
+    skill_runtimes:
+      - .agents/skills
+      - .claude/skills
+    owners:
+      team: mandate-plugin
+      layout: app_src
+
+  platform-tooling:
+    owners:
+      team: mandate-verify-maintainers
+      layout: none
+
+repos: {}

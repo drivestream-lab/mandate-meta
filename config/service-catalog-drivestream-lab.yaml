@@ -1,0 +1,44 @@
+apiVersion: launchpad/v1
+kind: ServiceCatalog
+
+# branch_code is read by humans and the strict branch-name policy:
+# feature/INIT-MANDATE-001-w<n>-<task-slug> (PL-9, Launchpad branching policy).
+
+org: drivestream-lab
+
+services:
+  mandate-meta:
+    stack: meta-pm
+    description: Control plane for Mandate. PRDs, implementation plan, ledger checkpoints
+    status: live
+    teams: [mandate-pm, mandate-pe]
+    branch_code: MANDATE
+    links:
+      repo: https://github.com/drivestream-lab/mandate-meta
+
+  mandate:
+    stack: python-backend
+    description: Mandate core (modular monolith) and the mandate-context gateway
+    status: planned
+    teams: [mandate-backend, mandate-pe]
+    branch_code: MANDATE
+    links:
+      repo: https://github.com/drivestream-lab/mandate
+
+  mandate-control-tower:
+    stack: paperclip-plugin
+    description: Paperclip plugin. Control tower, settings, autonomy map
+    status: planned
+    teams: [mandate-plugin, mandate-pe]
+    branch_code: MANDATE
+    links:
+      repo: https://github.com/drivestream-lab/mandate-control-tower
+
+  mandate-verify:
+    stack: platform-tooling
+    description: Central reusable verification workflow. Signs release evidence
+    status: planned
+    teams: [mandate-verify-maintainers]
+    branch_code: MANDATE
+    links:
+      repo: https://github.com/drivestream-lab/mandate-verify

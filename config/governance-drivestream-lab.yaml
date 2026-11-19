@@ -1,0 +1,68 @@
+apiVersion: launchpad/v1
+kind: GovernanceConfig
+
+# Mandate's own repos (PL-1). While Mandate is built (REQ-120) a human review
+# gates every PR (PL-14), so require_pr_reviews stays at 1.
+# Day 1: mandate-meta. Day N: the three app repos below.
+
+org: drivestream-lab
+
+stack_profiles:
+  meta-pm: Programme management and ADR meta repo
+  python-backend: Python services under python-services-rules (Mandate core and mandate-context)
+  paperclip-plugin: Paperclip plugin under paperclip-plugin-rules (control tower)
+  platform-tooling: Workflow-only repo, no constitution (mandate-verify)
+
+teams:
+  - name: mandate-pm
+    description: Mandate programme management (meta develop merges, spec handoff)
+    privacy: closed
+  - name: mandate-pe
+    description: Mandate principal engineering (ADRs, technical review, rules)
+    privacy: closed
+  - name: mandate-backend
+    description: Mandate core and mandate-context developers
+    privacy: closed
+  - name: mandate-plugin
+    description: Control tower plugin developers
+    privacy: closed
+  - name: mandate-release-managers
+    description: The only team that merges develop into main
+    privacy: closed
+  - name: mandate-verify-maintainers
+    description: Named humans who alone may merge to mandate-verify (PL-1)
+    privacy: closed
+
+repos:
+  mandate-meta:
+    stack: meta-pm
+    teams: [mandate-pm, mandate-pe, mandate-release-managers]
+    visibility: public
+    description: Control plane for Mandate. PRDs, implementation plan, ledger checkpoints
+
+  mandate:
+    stack: python-backend
+    teams: [mandate-backend, mandate-pe, mandate-release-managers]
+    visibility: public
+    description: Mandate core (modular monolith) and the mandate-context gateway
+
+  mandate-control-tower:
+    stack: paperclip-plugin
+    teams: [mandate-plugin, mandate-pe, mandate-release-managers]
+    visibility: public
+    description: Paperclip plugin. Control tower, settings, autonomy map; forwards events
+
+  mandate-verify:
+    stack: platform-tooling
+    teams: [mandate-verify-maintainers]
+    visibility: public
+    description: Central reusable verification workflow. Signs release evidence
+
+policy:
+  default_branch: main
+  integration_branch: develop
+  require_pr_reviews: 1
+  dismiss_stale_reviews: true
+
+project_board:
+  enabled: false   # OQ-11: Paperclip's board is the board; issues are copies only
