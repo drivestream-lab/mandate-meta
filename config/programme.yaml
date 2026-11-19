@@ -1,0 +1,11 @@
+apiVersion: launchpad/v1
+kind: Programme
+
+# Mandate: the governor for an autonomous agent delivery organisation.
+# INIT-MANDATE-001 builds the whole engineering-ready PRD in nine waves.
+programme: MANDATE
+programme_slug: mandate
+org: drivestream-lab
+meta_repo: mandate-meta
+forge:
+  provider: github
