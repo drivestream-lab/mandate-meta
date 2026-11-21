@@ -8,7 +8,10 @@ Mandate built to completion (every capability up to phase 3) as one initiative a
 
 ## 2. How it is built
 
-- Built by Claude Code under KD's review (REQ-120). One pull request per WorkManifest task, about 400 changed lines, into `develop` (ADR-021). Checks run locally and are attached to each PR (ADR-018).
+- Built by a Claude Code swarm (engineering-ready PRD PL-16, REQ-120): a stateless lead per round, builder subagents in their own worktrees (at most 3 at a time), and challengers on a different model. One pull request per WorkManifest task, about 400 changed lines, into `develop` (ADR-021).
+- A task PR merges through the builder App only when `mandate-runner`'s check `mandate/build-verified` passes on its head and the challenger (and, on the ledger, signoff check, evidence verification and merge control, a second challenger) approved that head. Protected paths wait for KD.
+- Each wave closes with a PR from `develop` into `main` that KD signs. The next wave starts only after `main` moves.
+- Wave B0 comes first and builds the swarm itself (runner, Apps, rulesets, agent definitions, `make swarm`); KD merges every B0 PR.
 - Tested against the real Paperclip and real GitHub sandbox repos; nothing is faked (ADR-017).
 - Branches: `feature/INIT-MANDATE-001-w<n>-<task-slug>` (ADR-025).
 - `mandate` repo guide for Claude Code: `mandate/CLAUDE.md`.
@@ -19,7 +22,8 @@ The product PRD names nine waves. This manifest follows prayog's `W0, W1, ...` n
 
 | Product wave | Manifest wave | Scope | Starts when |
 | --- | --- | --- | --- |
-| W1 Walking skeleton and project layout, part a | **W0** | Layout, checks, kernel, database, ledger, outbox, local stack, Paperclip client, test agents, programme readiness, gate brief and sealed call | Export merged |
+| Build mode | **B0** | The swarm itself: `mandate-runner` in `dev-infra-lab`, the builder and runner Apps, rulesets, agent definitions, the lead's section of `CLAUDE.md`, `make swarm` | Preflight passed |
+| W1 Walking skeleton and project layout, part a | **W0** | Layout, checks, kernel, database, ledger, outbox, local stack, Paperclip client, test agents, programme readiness, gate brief and sealed call | B0 merged |
 | W1 Walking skeleton and project layout, part b | **W1** | Signoff reading and the required check, revised and stale voiding, signed evidence, check-gated merge, the walking-skeleton end-to-end journey | Preflight (four checks) passes |
 | W2 Intake to accepted PRD | W2 | Planned when W1 closes | W1 closed |
 | W3 Spec to released waves | W3 | Planned when W2 closes | |
