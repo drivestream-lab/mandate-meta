@@ -51,6 +51,26 @@ W1 tasks rest on four platform behaviours proven by preflight (`planning/preflig
 | `paperclip-plugin-rules` repo and `profiles/paperclip-plugin.yaml` | new repo, `prayog-skills` | Before W5 |
 | Launchpad authenticates as a GitHub App | `launchpad` | Before the Conduit fix stage |
 
+## 6. Wave B0: the build swarm
+
+B0 builds the swarm that builds Mandate (engineering-ready PRD PL-16). It is the one wave KD merges task by task, because it creates the trust every later merge relies on. One Claude Code session builds it; each task is one PR.
+
+**Identities** (created 21 Nov 2026; keys, App ids and installation ids in `~/.mandate/secrets/build/<app>/`):
+
+| App | App ID | Role |
+| --- | --- | --- |
+| `mandate-builder` | 5860819 | Lead and builders: push branches, open task and wave PRs, merge task PRs into `develop` |
+| `mandate-challenger` | 5860827 | Challengers: Approve or post findings on the head commit |
+| `mandate-runner` | 5860839 | The runner only: post `mandate/build-verified`, open bug issues |
+
+| Task | Repo | Delivers | Exit criteria |
+| --- | --- | --- | --- |
+| B0-01 Runner service | `dev-infra-lab` | `mandate-runner`: a plain-Python service (no model) in a container on `lab_local`, polling open PRs on `mandate` and `mandate-control-tower` every 30 seconds | For each PR head it checks out the exact commit into a fresh workspace and runs its pinned command set (`make check`, `make test`, `make journeys`) from its own config file in `dev-infra-lab`, never from the PR. It posts `mandate/build-verified` as success only when the commands pass and the review rules hold: an Approve from `mandate-challenger` on that head; a second one when the diff touches the ledger, the signoff check, evidence verification or merge control; KD's Approve when it touches a protected path (PL-16); and, for a PR from `develop` into `main`, KD's signoff (`wave-accepted`, attested Approve, ready) plus the full journey set. Otherwise it posts failure with the reason. Logs are kept per run and linked from the check. Its key is mounted only into its own container. Unit tests cover every rule |
+| B0-02 Deploy and freeze | `dev-infra-lab` | After every merge into `develop`, the runner deploys that head to the lab stack and runs every journey built so far against the sandbox repos | A red run opens a bug issue on `mandate` linked to the merge and sets a merge freeze: while it is open, every task PR's check fails with "develop is red". Fixing it clears the freeze |
+| B0-03 Rulesets | `mandate`, `mandate-control-tower` | On `develop` and `main`: pull request required, 0 approvals, required check `mandate/build-verified` from App 5860839, no bypass actors | A merge without the runner's check is refused, including for an owner; the ruleset ids are recorded in this plan |
+| B0-04 Swarm definitions | `mandate` | `.claude/agents/` (builder, challenger, second challenger, verifier, integrator), the lead's section of `CLAUDE.md`, a git credential helper that mints the role's App token, and `make swarm`: a plain loop that starts one headless Claude Code lead per round | Builders run on Sonnet 5.5 and challengers on Opus 5.5 (PL-16). Each role reads only its own App's folder under `~/.mandate/secrets/build/`. The lead keeps a pinned build-log issue on `mandate`, appending one entry per round. `make swarm` survives a restart and resumes from repo state |
+| B0-05 Dry run | `mandate` | One small real task (the build-log issue template and labels) run end to end by the swarm | Builder opens the PR; the challenger reviews; the runner posts the check; the builder App merges at the head; the build log records the round. KD signs a B0 wave PR from `develop` into `main` |
+
 ## 9. WorkManifest
 
 ```yaml
