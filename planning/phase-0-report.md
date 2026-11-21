@@ -28,6 +28,28 @@ Recorded permissions: `canCreateAgents: true`, `canCreateSkills: true`. Heartbea
 | 12 | Not run | No `mandate` database restore drill. |
 | 13 | Not run | `launchpad status` was not captured as a gate. |
 
+## Re-run on 2026-11-21
+
+Stopped at the first failure, check 1. Checks 7 and 8 were not re-run.
+
+### Identity
+
+`PATCH /api/agents/bb97b5d0-b2ca-40ae-83bf-c0e84ff1187d/permissions` with `canCreateAgents: false`, `canCreateSkills: false`, `canAssignTasks: false` returned 200. Heartbeat stayed `enabled: false` and `wakeOnDemand: true`.
+
+Final permissions: `canCreateAgents: false`, `canCreateSkills: false`, `canAssignTasks: false`.
+
+A run id is not minted by the agent key. `POST /api/agents/:id/wakeup` (or an assignment wakeup) creates a heartbeat run. Inside that run the runner sends `X-Paperclip-Run-Id` with the heartbeat run id. Issue and decision writes require that header.
+
+Check 2 was not repeated after the permission change because check 1 failed first.
+
+### Check 1
+
+Worker `sandbox-coder` `88db5b6e-13fc-4f25-bb6d-0f9a1fd74534`, status `idle`. Issue `MAN-2` `c7e8b9ce-5c3d-41bb-9787-dc6d37b15db9`, assignee `sandbox-coder`, only approver Mandate.
+
+`PATCH /api/issues/c7e8b9ce-5c3d-41bb-9787-dc6d37b15db9` `{"status":"in_review"}` as the board returned 200. Status `in_review`, stage `pending`, participant Mandate.
+
+`PATCH` `{"status":"done"}` as the board returned 200. Status `done`. Expected a refusal. Stopped. Mandate did not approve inside a run.
+
 ## Spike branches
 
 These are unmerged throwaway branches. They are not on `mandate-meta`.
