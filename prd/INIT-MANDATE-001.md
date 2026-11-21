@@ -398,7 +398,7 @@ Each requirement is something a user can observe. The engineering-ready PRD keep
 | REQ-115 | Mandate can be backed up and restored to a point in time, and in-flight work resumes from the restored state | J-22 |
 | REQ-116 | Mandate reports its own health and alerts the platform operator when it cannot act | J-22, J-28 |
 | REQ-117 | Once Conduit has passed the phase 1 gate, Mandate's own development joins as a programme governed by Mandate | J-17, J-28 |
-| REQ-120 | Until Mandate's own development joins as a programme, Claude Code builds Mandate under human review, with each review decision recorded in the ledger's own format; those records are imported when Mandate's programme is onboarded, so its history is complete from the first decision | J-28 |
+| REQ-120 | Until Mandate's own development joins as a programme, Mandate is built by a Claude Code swarm (engineering-ready PRD PL-16). A task pull request merges into develop only when a deterministic runner's check passes on its head and an independent challenger has approved that head; pull requests touching protected paths, and every wave close from develop into main, need KD's signoff. Every merge, review and signoff is recorded in the ledger's own format; those records are imported when Mandate's programme is onboarded, so its history is complete from the first decision | J-28 |
 
 ## 8. Autonomy model
 
