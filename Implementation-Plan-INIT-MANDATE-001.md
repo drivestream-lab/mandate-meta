@@ -394,10 +394,34 @@ work:
           criteria:
             - "A programme is created on a Paperclip project from the meta repo's Launchpad configuration at a commit (repos, roles, decision owner per gate class, workflow version, starting rung)"
             - "Readiness shows every role has a usable agent, GitHub access works for every repo and the pinned workflow loads; each failure is shown with its cause; nothing starts while any fails"
+            - "Readiness also checks Mandate's own Paperclip agent cannot create agents or skills or assign tasks: the agent permission flags alone do not deny these on the pinned Paperclip, so the interaction permissions and a company skill-policy deny rule must be set and are checked (KD, 27 Nov 2026)"
+            - "PaperclipService is bound in the DI modules here, its first consumer"
           proof:
             kind: command
             command: "make journeys -- tests/journeys/onboard_a_programme"
             expected: "exit 0 against the ephemeral Paperclip and mandate-sandbox repos"
+            evidence_expected: "PR body"
+
+      - id: TASK-W0-12
+        implements: [REQ-55]
+        depends_on: [TASK-W0-11]
+        files:
+          - path: docker/mandate/entrypoint.sh
+            action: modify
+          - path: src/configs/postgres_settings.py
+            action: modify
+          - path: docker/docker-compose.deploy.yml
+            action: modify
+          - path: README.md
+            action: modify
+        exit:
+          criteria:
+            - "Database credentials reach the container as files read by path (ADR-019), not as env values: the owner's are read only by the migration step, the app's by the service; docker inspect and docker exec show no password"
+            - "mandate-verify's deployer mounts the lab credential files (a companion mandate-verify PR); the lab env file keeps only non-secret settings"
+          proof:
+            kind: command
+            command: "make journeys ARGS=tests/journeys/database_roles"
+            expected: "exit 0"
             evidence_expected: "PR body"
 
       - id: TASK-W0-10
