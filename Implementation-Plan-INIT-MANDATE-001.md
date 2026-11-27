@@ -9,8 +9,8 @@ Mandate built to completion (every capability up to phase 3) as one initiative a
 ## 2. How it is built
 
 - Built by a Claude Code swarm (engineering-ready PRD PL-16, REQ-120): a stateless lead per round, builder subagents in their own worktrees (at most 3 at a time), and challengers on a different model. One pull request per WorkManifest task, about 400 changed lines, into `develop` (ADR-021).
-- A task PR merges through the builder App only when `mandate-runner`'s check `mandate/build-verified` passes on its head and the challenger (and, on the ledger, signoff check, evidence verification and merge control, a second challenger) approved that head. Protected paths wait for KD.
-- Each wave closes with a PR from `develop` into `main` that KD signs. The next wave starts only after `main` moves.
+- A task PR merges through the builder App only when `mandate-runner`'s check `mandate/build-verified` passes on its head and the challenger (and, on the ledger, signoff check, evidence verification and merge control, a second challenger) approved that head. Protected paths need that second challenger too (PL-16 BP-10).
+- Each wave closes with a PR from `develop` into `main`, signed by the challenger App after the verifier checked the deployed evidence, and merged by the builder App (PL-16 BP-10: no person's account in the flow). The next wave starts only after `main` moves.
 - Wave B0 comes first and builds the swarm itself (runner, Apps, rulesets, agent definitions, `make swarm`); KD merges every B0 PR.
 - Tested against the real Paperclip and real GitHub sandbox repos; nothing is faked (ADR-017).
 - Branches: `feature/INIT-MANDATE-001-w<n>-<task-slug>` (ADR-025).
