@@ -357,11 +357,11 @@ Grounding note: Launchpad 0.5.39 authenticates with a fine-grained factory PAT (
 
 | Role | Does | Never does |
 | --- | --- | --- |
-| Lead | Reads the WorkManifest and repo state, starts every task whose dependencies are merged (at most 3 builders), plans the next wave, opens the wave PR | Write code, merge |
+| Lead | Reads the WorkManifest and repo state, starts every task whose dependencies are merged (at most 3 builders), runs `merge_task.sh` on runner-green heads, plans the next wave, opens the wave PR | Write code, merge by judgement |
 | Builder (one per task) | Code, tests and as-built row in its own worktree and branch; opens the task PR | Touch files outside its task; review its own work |
 | Challenger | Read-only review against the spec, ADRs and exit criteria, reading them before the diff; posts an Approve or findings on the head commit | Edit code |
 | Second challenger | An independent second review on the ledger, the signoff check, evidence verification and merge control | Edit code |
-| Verifier | Turns runner failures into findings and bug issues | Produce evidence |
+| Verifier | Deploys each PR head and runs `make verify` as a black-box test, checks the deployed app's tables and logs against the exit criteria, posts that evidence on the PR, and turns runner failures into findings and bug issues; in wave mode it checks the lab deploy and posts the wave signoff (BP-10) | Edit code, post a commit status, or produce the runner's grading |
 | Integrator | Keeps open PRs current with `develop` and resolves conflicts | Change what a task does |
 
 | Decision | Choice |
@@ -372,8 +372,8 @@ Grounding note: Launchpad 0.5.39 authenticates with a fine-grained factory PAT (
 | Challenger independence (BP-4 C) | Builders on Sonnet 5.5; challengers on Opus 5.5, read-only, spec first; a second independent Opus challenger on the four trust-critical capabilities |
 | Wave close (BP-5 A, amended by BP-10) | A wave PR from `develop` into `main`, opened by the builder App with a brief (tasks merged, journeys run, findings, spend) and the runner's full-journey check on its head. The verifier checks the lab deploy of the develop head against every exit criterion of the wave and posts the evidence; the builder App adds `wave-accepted` and marks it ready; the challenger App posts the signoff (`Signoff: wave`, `Initiative`, `Head`); the builder App merges it. The next wave starts only after `main` moves |
 | Protected paths (BP-6 B) | `CLAUDE.md`, `.claude/agents/`, the `.cursor/rules` submodule, `docs/specification/adr/`, `docs/specification/product/`, `tests/journeys/`, `tests/verify/`, `Makefile`, tool settings in `pyproject.toml`, `.importlinter`, `.pre-commit-config.yaml`. A PR touching any of them needs a second, independent challenger Approve, which asks above all whether the change makes the swarm's own work easier to pass (BP-10) |
-| Running unattended (BP-7 B) | A stateless lead per round, started by a plain `make swarm` loop on the lab machine. It rebuilds its state from GitHub and the repos (WorkManifest, as-built table, PR states and checks, and a pinned build-log issue in `mandate` that it appends to each round), acts and exits. Sleep, crash or context limits lose nothing |
-| Bootstrap (BP-8 A) | Wave B0 builds the swarm: `mandate-runner` in `mandate-verify`, the rulesets on `mandate` and `mandate-control-tower`, the agent definitions and the lead's section of `CLAUDE.md`, and the `make swarm` loop. KD merges every B0 PR and creates the two GitHub Apps |
+| Running the lead (BP-7 B, amended 27 Nov 2026) | The lead is a Claude Code session working this plan wave by wave with KD's inputs, started with KD's `GITHUB_TOKEN` removed. It rebuilds its state from GitHub and the repos (WorkManifest, as-built table, PR states and checks, and a pinned build-log issue in `mandate` it appends to) every time it starts or resumes, so a lost session loses nothing. The `make swarm` loop was built (mandate PR 3) and removed by KD's decision (mandate PR 7) |
+| Bootstrap (BP-8 A, amended by BP-10) | Wave B0 builds the swarm: `mandate-runner` in `mandate-verify`, the rulesets on `mandate` and `mandate-control-tower`, the agent definitions and the lead's section of `CLAUDE.md`. KD created the GitHub Apps and applied the rulesets. B0's last PRs went through the same App-only flow as every later PR (one PR per repo, verified as a whole); nothing merges into `main` until KD says so |
 
 **Merging.** The builder App, `mandate-builder`, merges task PRs into `develop` and wave PRs from `develop` into `main` on `mandate` and `mandate-control-tower`, always pinned to the head commit, and only when `mandate/build-verified` passes on that head. The runner encodes every review rule, so its check is the only signal a merge follows. The swarm's tokens are scoped to those two repos, so it cannot write to rulesets, `mandate-verify` or `mandate-meta`, and it is never Mandate's own App.
 
