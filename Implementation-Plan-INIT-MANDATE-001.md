@@ -250,9 +250,35 @@ work:
             expected: "exit 0; property tests pass across generated chains"
             evidence_expected: "PR body"
 
+      - id: TASK-W0-11
+        implements: [REQ-55]
+        depends_on: [TASK-W0-03]
+        files:
+          - path: docker/mandate/entrypoint.sh
+            action: modify
+          - path: src/configs/postgres_settings.py
+            action: modify
+          - path: docker/docker-compose.deploy.yml
+            action: modify
+          - path: README.md
+            action: modify
+          - path: tests/journeys/database_roles/test_service_runs_as_the_app_role.py
+            action: create
+        exit:
+          criteria:
+            - "The image migrates with the owner credentials (mandate_owner) and then starts the service with the app credentials (mandate_app); the running service never holds the owner credentials (ADR-020)"
+            - "The env file carries both sets: the app's as the service's connection settings and the owner's as separate migration settings; a missing set stops the start with its name, never falls back to the other (ER-09)"
+            - "The deploy stack and the lab both run the service as mandate_app: a journey shows the service's database session is mandate_app and that it cannot rewrite ledger.entries"
+            - "The README's lab env table lists both sets of keys (names only)"
+          proof:
+            kind: command
+            command: "make journeys ARGS=tests/journeys/database_roles"
+            expected: "exit 0"
+            evidence_expected: "PR body"
+
       - id: TASK-W0-05
         implements: [REQ-55]
-        depends_on: [TASK-W0-04]
+        depends_on: [TASK-W0-04, TASK-W0-11]
         files:
           - path: src/business_services/outbox/outbox_dispatch_service.py
             action: create
