@@ -257,7 +257,7 @@ src/
   api/                       plugin backend, webhooks (built, disabled), health
   business_services/<capability>/   *_service.py per use case
   engine/<capability>/       pure rules, no IO: promotion and demotion, policy evaluation, ledger hash chain, wave planning
-  workflows/                 Temporal workflow definitions; activities call business services
+  engine/workflows/          Temporal workflow definitions (deterministic); they call business-service activities by typed name
   infra_services/            paperclip, github_app, temporal, litellm, context engine clients (*_service.py)
   database/postgres/repository/<capability>/   database/postgres/schema/
   models/<capability>_models.py   every Pydantic model
@@ -267,9 +267,9 @@ Rules applied as written: pyright `strict` from the first commit; Pydantic v2 at
 
 **Extension points** are typed `Protocol`s with a `StrEnum` registry, bound in `di/modules/`: building blocks (AD-3), context engines (REQ-36), outcome checks per gate class, merge strategy (AD-8). Adding one is a class, an enum value and a binding; pyright flags every unhandled `match`.
 
-**Import contracts** (import-linter, CI): the rules' layer contract (`api` → `business_services` → repository → schema); `engine` imports no IO layer; `workflows` imports `business_services` and `models` only; the `mandate_context` entrypoint imports only `models`, `engine` and its own infra client.
+**Import contracts** (import-linter, CI): the rules' layer contract (`api` → `business_services` → repository → schema); `engine` imports no IO layer, and only `engine.workflows` may import `temporalio.workflow`; the `mandate_context` entrypoint imports only `models`, `engine` and its own infra client.
 
-**Upstream change:** one pull request to `python-services-rules` adds `workflows/` (durable workflow definitions) to the standard package table, since the rules have no slot for it today.
+**No upstream change** (KD, 27 Nov 2026). Temporal workflow code must be deterministic, which is the rules' definition of `engine/` ("deterministic domain logic without HTTP/DB"), so workflows live in `engine/workflows/` and `python-services-rules` is unchanged. Activities, which do the I/O, stay in `business_services/`; workflows call them by name through typed stubs (a `StrEnum` of activity names with Pydantic inputs and outputs in `models/`), and a unit test checks every name is registered in `worker_main.py`.
 
 **PL-3 Where the documents live.** Once the layout questions close, these documents are exported to the repos, which become the source of truth; the Claude docs are then marked as archived snapshots. The export is the first commit to `mandate-meta`, before W1. It follows Launchpad's meta conventions and the rules' truth hierarchy (`.cursor/rules/` how, `docs/specification/product/` what, `adr/` why, `as-built/` what is live).
 
@@ -357,7 +357,7 @@ Grounding note: Launchpad 0.5.39 authenticates with a fine-grained factory PAT (
 
 | Role | Does | Never does |
 | --- | --- | --- |
-| Lead | Reads the WorkManifest and repo state, starts every task whose dependencies are merged (at most 3 builders), runs `merge_task.sh` on runner-green heads, plans the next wave, opens the wave PR | Write code, merge by judgement |
+| Lead | Reads the WorkManifest and repo state, starts every task whose dependencies are merged (at most 2 builders, KD 27 Nov 2026), runs `merge_task.sh` on runner-green heads, plans the next wave, opens the wave PR | Write code, merge by judgement |
 | Builder (one per task) | Code, tests and as-built row in its own worktree and branch; opens the task PR | Touch files outside its task; review its own work |
 | Challenger | Read-only review against the spec, ADRs and exit criteria, reading them before the diff; posts an Approve or findings on the head commit | Edit code |
 | Second challenger | An independent second review on the ledger, the signoff check, evidence verification and merge control | Edit code |

@@ -8,7 +8,7 @@ Mandate built to completion (every capability up to phase 3) as one initiative a
 
 ## 2. How it is built
 
-- Built by a Claude Code swarm (engineering-ready PRD PL-16, REQ-120): a stateless lead per round, builder subagents in their own worktrees (at most 3 at a time), and challengers on a different model. One pull request per WorkManifest task, about 400 changed lines, into `develop` (ADR-021).
+- Built by a Claude Code swarm (engineering-ready PRD PL-16, REQ-120): a stateless lead per round, builder subagents in their own worktrees (at most 2 at a time, KD 27 Nov 2026), and challengers on a different model. One pull request per WorkManifest task, about 400 changed lines, into `develop` (ADR-021).
 - A task PR merges through the builder App only when `mandate-runner`'s check `mandate/build-verified` passes on its head and the challenger (and, on the ledger, signoff check, evidence verification and merge control, a second challenger) approved that head. Protected paths need that second challenger too (PL-16 BP-10).
 - Each wave closes with a PR from `develop` into `main`, signed by the challenger App after the verifier checked the deployed evidence (PL-16 BP-10: no person's account in the flow). The merge into `main` waits for KD, and the next wave starts only after `main` moves.
 - Wave B0 comes first and builds the swarm itself (runner, Apps, rulesets, agent definitions); its PRs merge through the Apps like every other PR (PL-16 BP-10).
@@ -46,7 +46,7 @@ W1 tasks rest on four platform behaviours proven by preflight (`planning/preflig
 
 | Change | Repo | Needed by |
 | --- | --- | --- |
-| Add `workflows/` to the standard package table | `python-services-rules` | W0 (TASK-W0-01 opens the PR) |
+| ~~Add `workflows/` to the standard package table~~ Not needed: workflows live in `engine/workflows/` (KD, 27 Nov 2026) | `python-services-rules` | None |
 | Contract v3: gate nodes with a class, nine kinds, deciding roles | `prayog-skills` (parallel initiative) | Before W2 |
 | `paperclip-plugin-rules` repo and `profiles/paperclip-plugin.yaml` | new repo, `prayog-skills` | Before W5 |
 | Launchpad authenticates as a GitHub App | `launchpad` | Before the Conduit fix stage |
@@ -138,7 +138,7 @@ work:
             action: modify
           - path: src/engine/__init__.py
             action: create
-          - path: src/workflows/__init__.py
+          - path: src/engine/workflows/__init__.py
             action: create
           - path: src/worker_main.py
             action: create
@@ -152,15 +152,16 @@ work:
             action: create
           - path: docs/specification/as-built/requirements.md
             action: modify
+          - path: docs/specification/adr/ADR-014-inside-mandate.md
+            action: modify
         exit:
           criteria:
-            - "src/ follows ADR-014: engine/, workflows/, worker_main.py and context_main.py exist beside the scaffold's layers"
-            - "import-linter carries the rules' layer contract plus: engine imports no IO layer; workflows imports only business_services and models; context_main imports only models, engine and its own infra client; a deliberate violation fails make check"
+            - "src/ follows ADR-014: engine/, engine/workflows/, worker_main.py and context_main.py exist beside the scaffold's layers; ADR-014 records that workflows live in engine/workflows/ with no change to python-services-rules"
+            - "import-linter carries the rules' layer contract plus: engine imports no IO layer, and only engine.workflows may import temporalio.workflow; workflows call activities by typed name, and a unit test checks every activity name is registered in worker_main.py; context_main imports only models, engine and its own infra client; a deliberate violation fails make check"
             - "pyright runs in strict mode over src/ and tests/ with zero errors"
             - "Makefile has the five targets every repo has (setup, check, test, deploy, verify; mandate-verify PR 7) plus journeys for the ephemeral stack; pre-commit runs make check, pre-push runs make test"
             - "tests use a pytest marker req(...) and a check fails the test run when a requirement listed for W0 and W1 has no test"
-            - "scripts/record_review_decision.py writes a review decision for a merged PR as a JSON line in the ledger entry format (actor, choice, target commit, version stamp) to mandate-meta/ledger-import/"
-            - "A pull request to python-services-rules adds workflows/ to the standard package table"
+            - "scripts/record_review_decision.py writes a review decision for a merged PR as a JSON line in the ledger entry format (actor, choice, target commit, version stamp) to a local file; it is run by hand and its output is committed to mandate-meta/ledger-import/ by KD"
           proof:
             kind: command
             command: "make check && make test"
@@ -215,7 +216,7 @@ work:
             - "One Postgres schema per capability needed by W0 and W1 (ledger, runner, gates, release, programmes, policy, outbox, inbound) with tables owned by mandate_owner"
             - "mandate_app has only INSERT and SELECT on ledger.entries; an UPDATE or DELETE by mandate_app fails"
             - "A trigger rejects UPDATE and DELETE on ledger.entries even for mandate_owner unless the migration is explicitly marked for it"
-            - "The migration was created with scripts/create_postgres_migration.sh; KD applies it with scripts/run_postgres_migration.sh"
+            - "The migration was created with scripts/create_postgres_migration.sh; lab and test stacks apply it automatically at deploy (the image entrypoint, as the runner already does); a production apply stays a human step with scripts/run_postgres_migration.sh"
           proof:
             kind: command
             command: "make check && pytest tests/journeys/database_roles -q"
@@ -559,7 +560,7 @@ work:
         implements: [REQ-01, REQ-02, REQ-39, REQ-40, REQ-42, REQ-43, REQ-54, REQ-55, REQ-60, REQ-61, REQ-62, REQ-63, REQ-86, REQ-103, REQ-108, REQ-109, REQ-118, REQ-121, REQ-122]
         depends_on: [TASK-W1-01, TASK-W1-02, TASK-W1-03, TASK-W1-04]
         files:
-          - path: src/workflows/walking_skeleton_workflow.py
+          - path: src/engine/workflows/walking_skeleton_workflow.py
             action: create
           - path: src/business_services/runner/walking_skeleton_runner_service.py
             action: create
